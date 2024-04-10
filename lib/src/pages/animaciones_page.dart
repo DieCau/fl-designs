@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as Math;
+import 'dart:math' as my_math;
 
 class AnimacionesPage extends StatelessWidget {
   const AnimacionesPage({super.key});
@@ -25,19 +25,39 @@ class CuadradoAnimado extends StatefulWidget {
 
 class _CuadradoAnimadoState extends State<CuadradoAnimado> with SingleTickerProviderStateMixin {
   late AnimationController controller;
-  late Animation<double> rotation;
+  late Animation<double> rotationAnimation;
+
+  late Animation<double> opacityAnimation;
+  late Animation<double> opacityOutAnimation;
+  
+  late Animation<double> moveRightAnimation;
+  late Animation<double> scalarAnimation;
 
   // 2 Estados de un STFW
   @override
   void initState() {
     // Inicializar el controller
     controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 4000));
-    rotation = Tween(begin: 0.0, end: 2 * Math.pi).animate(
-      CurvedAnimation(parent: controller, curve: Curves.easeOutQuart)
-    );
+
+    rotationAnimation = Tween(begin: 0.0, end: 2 * my_math.pi)
+        .animate(CurvedAnimation(parent: controller, curve: Curves.easeOut));
+
+    opacityAnimation = Tween(begin: 0.1, end: 1.0).animate(
+        CurvedAnimation(parent: controller, curve: const Interval(0, 0.25, curve: Curves.easeOut)));
+   
+    opacityOutAnimation = Tween(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(parent: controller, curve: const Interval(0.75, 1.0, curve: Curves.easeOut)));
+
+    moveRightAnimation = Tween(begin: 0.0, end: 200.0)
+        .animate(CurvedAnimation(parent: controller, curve: Curves.easeOut));
+
+    scalarAnimation = Tween(begin: 0.0, end: 2.0)
+        .animate(CurvedAnimation(parent: controller, curve: Curves.easeOut));
 
     controller.addListener(() {
       if (controller.status == AnimationStatus.completed) {
+        // controller.reverse();
+        // controller.repeat();
         controller.reset();
       }
     });
@@ -58,9 +78,20 @@ class _CuadradoAnimadoState extends State<CuadradoAnimado> with SingleTickerProv
 
     return AnimatedBuilder(
       animation: controller,
-      // child: _Rectangulo(),
-      builder: (BuildContext context, Widget? child) {
-        return Transform.rotate(angle: rotation.value, child: _Rectangulo());
+      child: _Rectangulo(),
+      builder: (BuildContext context, Widget? childRectangulo) {
+        
+        // print('Opacidad: ${opacityAnimation.value}'); // Para tener informacion adicional de los Estados
+        
+        return Transform.translate(
+          offset: Offset(moveRightAnimation.value, 0),
+          child: Transform.rotate(
+              angle: rotationAnimation.value,
+              child: Opacity(
+                opacity: opacityAnimation.value - opacityOutAnimation.value,
+                child: Transform.scale(scale: scalarAnimation.value, child: childRectangulo),
+              )),
+        );
       },
     );
   }
